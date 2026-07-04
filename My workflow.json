@@ -1,0 +1,875 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "Upload_Resume__PDF_",
+        "options": {
+          "joinPages": true
+        }
+      },
+      "id": "6c9e6e3f-5358-45f8-a7ed-bb59ae07f561",
+      "name": "Extract Resume Text",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        -1600,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "text": "={{ $json.text }}",
+        "attributes": {
+          "attributes": [
+            {
+              "name": "skills",
+              "description": "Comma-separated list of technical skills",
+              "required": true
+            },
+            {
+              "name": "yearsOfExperience",
+              "type": "number",
+              "description": "Total years of professional experience",
+              "required": true
+            },
+            {
+              "name": "education",
+              "description": "Highest degree and institution",
+              "required": true
+            },
+            {
+              "name": "currentRole",
+              "description": "Most recent job title"
+            },
+            {
+              "name": "certifications",
+              "description": "Professional certifications if any"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "13b83c77-add8-45dd-b074-da5ff718a3fe",
+      "name": "Extract Candidate Info",
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1.2,
+      "position": [
+        -1376,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Job Position: {{ $(\"Prepare Resume Data\").item.json.position }}\n\nJob Requirements for Fresh Candidates:\n- 0-1 years of professional experience \n- Basic knowledge of programming languages (Java, C#, Node.js, Python, JavaScript, etc.)\n- Familiarity with databases (SQL, MongoDB, MySQL, etc.)\n- Bachelor degree in Computer Science, Software Engineering, or related field (in progress or recently completed)\n- Strong academic projects or internship experience\n- Eagerness to learn and adapt to new technologies\n- Good communication and teamwork skills\n\nCandidate Profile:\nSkills: {{ $json.output.skills }}\nYears of Experience: {{ $json.output.yearsOfExperience }}\nEducation: {{ $json.output.education }}\nCurrent Role: {{ $json.output.currentRole }}\n\nAnalyze this candidate suitability for the position.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an expert HR analyst specializing in fresh graduate recruitment. Analyze candidate resumes against job requirements and provide structured assessments. For fresh candidates, focus on: academic performance, relevant coursework, projects, internships, technical skills, and learning potential. Provide: 1) A suitability score (0-100), 2) Brief reason for the score, 3) Recommendation: \"shortlist\" if score >= 60, otherwise \"reject\", 4) A concise summary highlighting the candidate strengths and potential."
+        }
+      },
+      "id": "b11cbcfd-f4d9-41e1-8956-e5afdbb602d5",
+      "name": "Analyze Resume Match",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -1024,
+        96
+      ],
+      "retryOnFail": true,
+      "maxTries": null
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{ \"suitabilityScore\": 85, \"matchReason\": \"Strong technical skills and relevant experience\", \"recommendation\": \"shortlist\", \"summary\": \"Experienced software engineer with 4 years in full-stack development\" }"
+      },
+      "id": "ad9e9632-8161-42f1-98a1-b2c0486ac998",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -944,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "candidateName",
+              "value": "={{ $(\"Prepare Resume Data\").item.json.candidateName }}",
+              "type": "string"
+            },
+            {
+              "id": "2",
+              "name": "email",
+              "value": "={{ $(\"Prepare Resume Data\").item.json.email }}",
+              "type": "string"
+            },
+            {
+              "id": "3",
+              "name": "phone",
+              "value": "={{ $(\"Prepare Resume Data\").item.json.phone }}",
+              "type": "string"
+            },
+            {
+              "id": "4",
+              "name": "position",
+              "value": "={{ $(\"Prepare Resume Data\").item.json.position }}",
+              "type": "string"
+            },
+            {
+              "id": "5",
+              "name": "skills",
+              "value": "={{ $(\"Extract Candidate Info\").item.json.output.skills }}",
+              "type": "string"
+            },
+            {
+              "id": "6",
+              "name": "yearsOfExperience",
+              "value": "={{ $(\"Extract Candidate Info\").item.json.output.yearsOfExperience }}",
+              "type": "number"
+            },
+            {
+              "id": "7",
+              "name": "education",
+              "value": "={{ $(\"Extract Candidate Info\").item.json.output.education }}",
+              "type": "string"
+            },
+            {
+              "id": "8",
+              "name": "suitabilityScore",
+              "value": "={{ $json.output.suitabilityScore }}",
+              "type": "number"
+            },
+            {
+              "id": "9",
+              "name": "matchReason",
+              "value": "={{ $json.output.matchReason }}",
+              "type": "string"
+            },
+            {
+              "id": "10",
+              "name": "recommendation",
+              "value": "={{ $json.output.recommendation }}",
+              "type": "string"
+            },
+            {
+              "id": "11",
+              "name": "summary",
+              "value": "={{ $json.output.summary }}",
+              "type": "string"
+            },
+            {
+              "id": "12",
+              "name": "applicationDate",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            },
+            {
+              "id": "13",
+              "name": "status",
+              "value": "pending_review",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "4e8dbdaf-120b-4ccd-8827-94e11d5102c8",
+      "name": "Combine Candidate Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -672,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "=jZU4fepxSAnefMIu",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "candidateName": "={{ $(\"Combine Candidate Data\").item.json.candidateName }}",
+            "email": "={{ $(\"Combine Candidate Data\").item.json.email }}",
+            "phone": "={{ $(\"Combine Candidate Data\").item.json.phone }}",
+            "position": "={{ $(\"Combine Candidate Data\").item.json.position }}",
+            "skills": "={{ $(\"Combine Candidate Data\").item.json.skills }}",
+            "yearsOfExperience": "={{ $(\"Combine Candidate Data\").item.json.yearsOfExperience }}",
+            "education": "={{ $(\"Combine Candidate Data\").item.json.education }}",
+            "suitabilityScore": "={{ $(\"Combine Candidate Data\").item.json.suitabilityScore }}",
+            "matchReason": "={{ $(\"Combine Candidate Data\").item.json.matchReason }}",
+            "recommendation": "={{ $(\"Combine Candidate Data\").item.json.recommendation }}",
+            "summary": "={{ $(\"Combine Candidate Data\").item.json.summary }}",
+            "applicationDate": "={{ $(\"Combine Candidate Data\").item.json.applicationDate }}",
+            "status": "={{ $(\"Combine Candidate Data\").item.json.status }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "candidateName",
+              "displayName": "candidateName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "position",
+              "displayName": "position",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "skills",
+              "displayName": "skills",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "yearsOfExperience",
+              "displayName": "yearsOfExperience",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "education",
+              "displayName": "education",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "suitabilityScore",
+              "displayName": "suitabilityScore",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "matchReason",
+              "displayName": "matchReason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "recommendation",
+              "displayName": "recommendation",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "summary",
+              "displayName": "summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "applicationDate",
+              "displayName": "applicationDate",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "10ffe59f-e4b7-42a1-9959-d82d568f3f8b",
+      "name": "Store in Database",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -224,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "1",
+              "leftValue": "={{ $(\"Combine Candidate Data\").item.json.recommendation }}",
+              "rightValue": "shortlist",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "28660562-f62e-4af4-a52b-d1aa04b4a788",
+      "name": "Check Recommendation",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        0,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "=1140069679195708",
+        "recipientPhoneNumber": "={{ $(\"Combine Candidate Data\").item.json.phone }}",
+        "textBody": "=Congratulations {{ $(\"Combine Candidate Data\").item.json.candidateName }}!  We are pleased to inform you that you have been shortlisted for the {{ $(\"Combine Candidate Data\").item.json.position }} position.  Your profile scored {{ $(\"Combine Candidate Data\").item.json.suitabilityScore }}/100 in our evaluation.  Our HR team will contact you shortly to schedule an interview.  Best regards, HR Team",
+        "additionalFields": {}
+      },
+      "id": "2b81fb74-dda7-487b-b80a-cafa4c826819",
+      "name": "WhatsApp - Shortlisted",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        0
+      ],
+      "webhookId": "c521e6ac-291d-452f-90d2-8af8098b95fa",
+      "alwaysOutputData": false,
+      "credentials": {
+        "whatsAppApi": {
+          "id": "ylwZ2EoXdZWXVo5U",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Generate 5 technical interview questions for a {{ $(\"Combine Candidate Data\").item.json.position }} candidate with the following profile:\n\nSkills: {{ $(\"Combine Candidate Data\").item.json.skills }}\nExperience: {{ $(\"Combine Candidate Data\").item.json.yearsOfExperience }} years\nEducation: {{ $(\"Combine Candidate Data\").item.json.education }}\n\nProvide questions that assess both technical depth and practical experience. Format as a numbered list.",
+        "options": {
+          "systemMessage": "You are an expert technical interviewer. Generate relevant, insightful interview questions tailored to the candidate profile and the job requirements."
+        }
+      },
+      "id": "7e4ca67a-6e50-4c46-81f1-a319238f782c",
+      "name": "Generate Interview Questions",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        448,
+        0
+      ],
+      "retryOnFail": false
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "m.arshad47411@gmail.com",
+          "mode": "list",
+          "cachedResultName": "m.arshad47411@gmail.com"
+        },
+        "start": "={{ $now.toISO() }}",
+        "end": "={{ $now.plus(1, \"hour\").toISO() }}",
+        "additionalFields": {
+          "attendees": [
+            "={{ $(\"Combine Candidate Data\").item.json.email }}"
+          ],
+          "description": "=Interview scheduled for {{ $(\"Combine Candidate Data\").item.json.candidateName }}\nPosition: {{ $(\"Combine Candidate Data\").item.json.position }}\nEmail: {{ $(\"Combine Candidate Data\").item.json.email }}\nPhone: {{ $(\"Combine Candidate Data\").item.json.phone }}",
+          "summary": "=Interview - {{ $(\"Combine Candidate Data\").item.json.candidateName }} - {{ $(\"Combine Candidate Data\").item.json.position }}"
+        }
+      },
+      "id": "54edbb14-5e89-4792-93cf-86c318024a76",
+      "name": "Schedule Interview Slot",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        800,
+        0
+      ],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "MuVBdbdak5Hs5lVn",
+          "name": "Google Calendar OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "1140069679195708",
+        "recipientPhoneNumber": "={{ $(\"Combine Candidate Data\").item.json.phone }}",
+        "textBody": "=Dear {{ $(\"Combine Candidate Data\").item.json.candidateName }},\n\nThank you for applying for the {{ $(\"Combine Candidate Data\").item.json.position }} position. After careful review of your application, we regret to inform you that we will not be moving forward with your candidacy at this time.\n\nWe appreciate your interest in our company and wish you the best in your job search.\n\nBest regards,\nHR Team",
+        "additionalFields": {}
+      },
+      "id": "200226fb-db77-4b82-9fe5-f0cc575d5519",
+      "name": "WhatsApp - Rejected",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        192
+      ],
+      "webhookId": "d82af257-c683-4c01-b4de-d47756e3a498",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "ylwZ2EoXdZWXVo5U",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "formTitle": "Job Application Form",
+        "formDescription": "Submit your application for open positions",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Full Name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Email Address",
+              "fieldType": "email",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Phone Number",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Position Applied For",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Upload Resume (PDF)",
+              "fieldType": "file",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "cab1c188-1bca-4275-82f7-bc919ef51d0f",
+      "name": "Application Form Trigger",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        -2048,
+        96
+      ],
+      "webhookId": "dce57464-fb33-4e7a-a0db-2af0280b0fef"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "candidateName",
+              "value": "={{ $json[\"Full Name\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "2",
+              "name": "email",
+              "value": "={{ $json[\"Email Address\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "3",
+              "name": "phone",
+              "value": "={{ $json[\"Phone Number\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "4",
+              "name": "position",
+              "value": "={{ $json[\"Position Applied For\"] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "cd74367e-d0dd-42ce-9773-7ce4ad35f4d7",
+      "name": "Prepare Resume Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1824,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        496,
+        480
+      ],
+      "id": "83e8c8c9-a69e-4592-b0ec-8863d62bbef4",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "RLoY9pohvZfpiEXY",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "table",
+        "operation": "create",
+        "tableName": "candidates",
+        "columns": {
+          "column": [
+            {
+              "name": "candidateName"
+            },
+            {
+              "name": "email"
+            },
+            {
+              "name": "phone"
+            },
+            {
+              "name": "position"
+            },
+            {
+              "name": "skills"
+            },
+            {
+              "name": "yearsOfExperience",
+              "type": "number"
+            },
+            {
+              "name": "education"
+            },
+            {
+              "name": "suitabilityScore",
+              "type": "number"
+            },
+            {
+              "name": "matchReason"
+            },
+            {
+              "name": "recommendation"
+            },
+            {
+              "name": "summary"
+            },
+            {
+              "name": "applicationDate"
+            },
+            {
+              "name": "status"
+            }
+          ]
+        },
+        "options": {
+          "createIfNotExists": true
+        }
+      },
+      "id": "2afc7d93-f5c0-4951-9a6e-580234ff5b72",
+      "name": "Create Candidates Table",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -448,
+        96
+      ],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "=1140069679195708\n",
+        "recipientPhoneNumber": "={{ $(\"Combine Candidate Data\").item.json.phone }}",
+        "textBody": "=📅 Interview Scheduled Successfully!  Hello {{ $(\"Combine Candidate Data\").item.json.candidateName }},  Your interview for the position of {{ $(\"Combine Candidate Data\").item.json.position }} has been scheduled successfully.  Interview Date & Time: {{ $(\"Schedule Interview Slot\").item.json.start.dateTime }}  Best of luck!  Regards, HR Team",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        1008,
+        0
+      ],
+      "id": "9fc9de05-1def-4e2e-8f22-770d6eb20170",
+      "name": "Send message",
+      "webhookId": "47742096-dd3f-4f88-b678-af134d15772a",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "ylwZ2EoXdZWXVo5U",
+          "name": "WhatsApp account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Extract Resume Text": {
+      "main": [
+        [
+          {
+            "node": "Extract Candidate Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Candidate Info": {
+      "main": [
+        [
+          {
+            "node": "Analyze Resume Match",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Resume Match": {
+      "main": [
+        [
+          {
+            "node": "Combine Candidate Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Analyze Resume Match",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine Candidate Data": {
+      "main": [
+        [
+          {
+            "node": "Create Candidates Table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store in Database": {
+      "main": [
+        [
+          {
+            "node": "Check Recommendation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Recommendation": {
+      "main": [
+        [
+          {
+            "node": "WhatsApp - Shortlisted",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "WhatsApp - Rejected",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WhatsApp - Shortlisted": {
+      "main": [
+        [
+          {
+            "node": "Generate Interview Questions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Interview Questions": {
+      "main": [
+        [
+          {
+            "node": "Schedule Interview Slot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Application Form Trigger": {
+      "main": [
+        [
+          {
+            "node": "Prepare Resume Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Resume Data": {
+      "main": [
+        [
+          {
+            "node": "Extract Resume Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Extract Candidate Info",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Generate Interview Questions",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Analyze Resume Match",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Candidates Table": {
+      "main": [
+        [
+          {
+            "node": "Store in Database",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Interview Slot": {
+      "main": [
+        [
+          {
+            "node": "Send message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "c4fc71d5-cfda-4bdb-a622-e53be328b488",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "dff831eb3ddc5094893ddcdf780d8506fc90fefeb29da65c569aa6e8e83bf580"
+  },
+  "nodeGroups": [],
+  "id": "GOqR4UYTLZ6uMYP6",
+  "tags": []
+}

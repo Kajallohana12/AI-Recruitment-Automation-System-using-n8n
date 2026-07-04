@@ -1,9 +1,14 @@
-# 🤖 AI-Based Recruitment Automation System using n8n
-AI-powered recruitment automation workflow that screens resumes, shortlists candidates, sends WhatsApp notifications, and schedules interviews automatically.
-## 🛠️ Tech Stack
-n8n • Google Gemini AI • Google Calendar • WhatsApp API
-## ⭐ Features
+# 🤖 AI-Based Recruitment Automation System
+An AI-powered recruitment automation workflow built with **n8n**.
+## Features
 - AI Resume Screening
-- Automatic Shortlisting
-- Interview Scheduling
+- Candidate Shortlisting
 - WhatsApp Notifications
+- Google Calendar Scheduling
+- AI Interview Question Generation
+## Tech Stack
+- n8n
+- Google Gemini AI
+- Google Calendar API
+- WhatsApp Business API
+
